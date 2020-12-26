@@ -1,0 +1,65 @@
+<html>
+    <head>
+        <title>Story</title>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js" integrity="sha512-bZS47S7sPOxkjU/4Bt0zrhEtWx0y0CRkhEp8IckzK+ltifIIE9EMIMTuT/mEzoIMewUINruDBIR/jJnbguonqQ==" crossorigin="anonymous"></script>
+    </head>
+    <h1>Story Lab</h1>
+    <strong>Prompt: A man is lost in the jungle.</strong>
+    <body>
+        <script type="text/javascript">
+        // get text lines from db
+            let endpoint = 'http://127.0.0.1:5000';
+            axios.get(endpoint+'/api/lines')
+                .then((lines) => {
+                    console.log(lines.data);
+                    for (var n in lines.data){
+                        $('#messages').append(`${lines.data[n].user}: ${lines.data[n].message}<br>`)
+                        console.log(lines.data[n].user);
+                    }
+                })
+                .catch((err) => {
+                    console.error(err);
+                })
+            
+        // check connection
+            $(document).ready(function(){
+                var socket = io.connect(endpoint);
+
+                socket.on('connect', function() {
+                    console.log('user connected')
+                });
+
+                socket.on('json', function(data) {
+                    $("#messages").append(`${data.user}: ${data.message}<br>`);
+                    console.log('received message');
+                });
+
+                $('#sendbutton').on('click', function() {
+                    var user = $('#userName').val();
+                    if (user === '')
+                        user = 'Anonymous';
+
+                    var data = {
+                        "user": user,
+                        "message": $('#myMessage').val()
+                    }
+                    console.log(data);
+                    if (data.message !== ''){
+                        socket.emit('json', data);
+                        $('#userName').val('');
+                        $('#myMessage').val('');
+                    }
+                })
+            })
+        </script>
+        <ul id="messages"></ul>
+        User:
+        <input type="text" id="userName">
+        <br>
+        Message:
+        <input type="text" id="myMessage">
+        <button id="sendbutton">Send</button>
+    </body>
+</html>
